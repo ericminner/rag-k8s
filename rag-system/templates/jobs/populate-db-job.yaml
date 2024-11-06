@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: populate-db
+  namespace: {{ .Release.Namespace }}
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: wait-for-embedding-service
+        image: busybox:1.28
+        command: ['sh', '-c', 'until nslookup embedding-service.{{ .Release.Namespace }}.svc.cluster.local; do echo waiting for embedding-service; sleep 2; done;']
+      containers:
+      - name: populate-db
+        image: python:3.9-slim
+        env:
+        - name: EMBEDDING_SERVICE_URL
+          value: "http://embedding-service.{{ .Release.Namespace }}.svc.cluster.local"
+        volumeMounts:
+        - name: docs-data
+          mountPath: /app/docs
+        - name: populate-script
+          mountPath: /app
+        command: ["bash", "-c"]
+        args:
+        - |
+          pip install requests
+          python /app/populate.py
+      volumes:
+      - name: docs-data
+        configMap:
+          name: kubernetes-docs
+      - name: populate-script
+        configMap:
+          name: populate-script
+      restartPolicy: Never
+  backoffLimit: 4

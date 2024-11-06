@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: populate-script
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+data:
+  populate.py: |
+    import requests
+    import json
+    import os
+
+    def populate_database():
+        with open('/app/docs/docs.json', 'r') as f:
+            data = json.load(f)
+            KUBERNETES_DOCS = data["documents"]  # Access the "documents" array
+
+        embedding_service_url = os.environ['EMBEDDING_SERVICE_URL']
+        print(f"Embedding service URL: {embedding_service_url}")  # Debug log
+
+        for doc in KUBERNETES_DOCS:
+            payload = {
+                "title": doc["title"],
+                "content": doc["content"],
+                "metadata": {
+                    "source": "kubernetes_docs",
+                    "category": "technical"
+                }
+            }
+
+            try:
+                print(f"Sending payload: {json.dumps(payload)}")  # Debug log
+                response = requests.post(
+                    embedding_service_url,
+                    json=payload,
+                    headers={"Content-Type": "application/json"}
+                )
+                print(f"Response: {response.status_code} - {response.text}")
+            except Exception as e:
+                print(f"Error: {str(e)}")
+
+    if __name__ == "__main__":  # Fixed syntax
+        populate_database()

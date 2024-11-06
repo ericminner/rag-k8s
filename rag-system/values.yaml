@@ -1,0 +1,156 @@
+# Default values for rag-system
+global:
+  namespace: rag-system
+  environment: development
+
+# Common settings that can apply to all services
+common:
+  imagePullSecrets: []
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext: {}
+  securityContext: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Database configuration
+postgres:
+  enabled: true
+  image:
+    repository: ankane/pgvector
+    tag: latest
+    pullPolicy: IfNotPresent
+  storage:
+    size: 1Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  credentials:
+    username: postgres
+    password: postgres
+  database: ragdb
+  service:
+    type: ClusterIP
+    port: 5432
+
+# Embedding service configuration
+embeddingService:
+  enabled: true
+  image:
+    repository: embedding-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 1
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8000
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8000
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: 8000
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 70
+
+# RAG service configuration
+ragService:
+  enabled: true
+  image:
+    repository: rag-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 1
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8000
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8000
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: 8000
+    initialDelaySeconds: 5
+    periodSeconds: 10
+
+# Frontend configuration
+frontend:
+  enabled: true
+  image:
+    repository: frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 1
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8501
+  volumeMounts:
+    - name: logging-config
+      mountPath: /app/.streamlit
+      readOnly: true
+  volumes:
+    - name: logging-config
+      configMap:
+        name: logging-config
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  hosts:
+    - host: rag-system.local
+      paths:
+        - path: /embed
+          pathType: Prefix
+          service: embedding-service
+          port: 80
+        - path: /rag
+          pathType: Prefix
+          service: rag-service
+          port: 80
+  tls: []

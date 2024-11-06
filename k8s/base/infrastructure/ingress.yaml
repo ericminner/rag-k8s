@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rag-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /embed
+        pathType: Prefix
+        backend:
+          service:
+            name: embedding-service
+            port:
+              number: 80
+      - path: /rag
+        pathType: Prefix
+        backend:
+          service:
+            name: rag-service
+            port:
+              number: 80

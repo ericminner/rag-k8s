@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-config
+  namespace: {{ .Values.global.namespace }}
+data:
+  host: "postgres-vector"
+  database: "{{ .Values.postgres.database }}"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logging-config
+  namespace: {{ .Values.global.namespace }}
+data:
+  config.toml: |
+    [logger]
+    level = "debug"
+    messageFormat = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+    [client]
+    showErrorDetails = true
+    toolbarMode = "developer"

@@ -1,0 +1,21 @@
+apiVersion: v2
+name: rag-system
+description: A Helm chart for RAG System with embedding and frontend services
+version: 0.1.0
+appVersion: "1.0.0"
+type: application
+keywords:
+  - rag
+  - ml
+  - embeddings
+maintainers:
+  - name: Eric Minner
+    email: ewminner@gmail.com
+annotations:
+  artifacthub.io/changes: |
+    - Templates organized into logical groups:
+      - core: Base infrastructure components
+      - db: Database-related resources
+      - services: Application services
+      - jobs: Batch jobs and related configurations
+      - config: Configuration resources

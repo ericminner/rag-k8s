@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: rag-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: frontend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8501
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
+        env:
+        - name: EMBEDDING_SERVICE_URL
+          value: "http://embedding-service.rag-system.svc.cluster.local"
+        - name: RAG_SERVICE_URL
+          value: "http://rag-service.rag-system.svc.cluster.local"
+        - name: ENVIRONMENT
+          value: "development"
+        - name: LOG_LEVEL
+          value: "DEBUG"
+        volumeMounts:
+        - name: logging-config
+          mountPath: /app/.streamlit
+          readOnly: true
+        - name: logs
+          mountPath: /var/log
+      volumes:
+      - name: logging-config
+        configMap:
+          name: logging-config
+      - name: logs
+        emptyDir: {}

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rag-system
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: rag-quota
+  namespace: rag-system
+spec:
+  hard:
+    requests.cpu: "4"
+    requests.memory: 8Gi
+    limits.cpu: "8"
+    limits.memory: 16Gi
+    pods: "20"
